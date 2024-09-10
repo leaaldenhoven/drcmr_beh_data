@@ -1,2 +1,2 @@
 # drcmr_beh_data
-Behavioural data analysis using R.
+In this markdown, I re-analysed the data collected in one of my master's theses. Originally, I used SPSS to analyse the data but wanted to practice my R skills using this dataset. The code can be found in the msc_minorthesis_statisticalanalysis file and I provided a output file to visualise what the code does.
