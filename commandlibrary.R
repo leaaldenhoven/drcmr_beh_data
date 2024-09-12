@@ -22,7 +22,23 @@
 ####        LOAD PACKAGES & DATA          ####
 ##############################################
 
+# I recommend "pacman" for managing add-on packages. It will
+# install packages, if needed, and then load the packages.
+install.packages("pacman")
 
+# Then load the package by using either of the following:
+require(pacman)  # Gives a confirmation message.
+library(datasets)  # Load/unload base packages manually
+library(pacman)  # No message.
+
+# Or, by using "pacman::p_load" you can use the p_load
+# function from pacman without actually loading pacman.
+# These are packages I load every time.
+pacman::p_load(pacman, dplyr, GGally, ggplot2, ggthemes, 
+  ggvis, httr, lubridate, plotly, rio, rmarkdown, shiny, 
+  stringr, tidyr) 
+
+# Load data
 getwd()
 setwd('C:/Users/leano/OneDrive/Documents/DRCMR/R')
 
@@ -381,11 +397,9 @@ apa.aov.table(lm(age~diagnosis,df),filename = "ShowingBebeR.doc",table.number = 
 ####               CLEAN-UP               ####
 ##############################################
 
+p_unload(dplyr, tidyr, stringr) # Clear specific packages
+p_unload(all)  # Easier: clears all add-ons
 detach("package:datasets", unload = TRUE) #packages
 rm(list = ls())                           #Environment
 dev.off()                                 #plots
 cat("\014")                               #console (ctrl+L)s
-
-
-
-
