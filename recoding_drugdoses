@@ -1,0 +1,179 @@
+#Clear environment and plots
+rm(list=ls())
+graphics.off()
+#Load Hmisc library
+library(Hmisc)
+#Read Data
+data=read.csv('/mnt/projects/7TPD/clinical_data/Medication/Medication.csv')
+
+###########################################################################
+####     Transformations -> new values saved in new dataframe: df      ####
+###########################################################################
+
+### We only need some of the columns/variables in the new dataframe, with list below they'll be in order of transformation
+#which(colnames(data) == "variable")  #to check column indices
+df <- data[c(1,35,37,39,41,43,45,47,49,51,53,11,13,15,17,19,21,23,25,27,29,83,85,87,89,91,93,95,97,99,101,59,61,63,65,
+             66,69,71,73,75,77,107,109,111,113,115,117,119,121,123,125,171,173,175,177,179,181,183,185,187,189,135,
+             137,139,141,143,145,147,149,151,153,195,197,199,201,203,127,209,212,215,154,157,160,221,204,163)]
+
+#replace NA with 0
+df[is.na(df)] <- 0
+
+
+
+#### Immediate Release L-Dopa (will be summed before other transformations are done)
+#Quick L-dopa, benserazid (e.g. Madopar Quick)    ------> irldopa = irldopa
+df <- transform(df,
+                med_levodopabens_quick_d_1 = med_levodopabens_quick_d_1 ,
+                med_levodopabens_quick_d_2 = med_levodopabens_quick_d_2,
+                med_levodopabens_quick_d_3 = med_levodopabens_quick_d_3,
+                med_levodopabens_quick_d_4 = med_levodopabens_quick_d_4,
+                med_levodopabens_quick_d_5 = med_levodopabens_quick_d_5,
+                med_levodopabens_quick_d_6 = med_levodopabens_quick_d_6,
+                med_levodopabens_quick_d_7 = med_levodopabens_quick_d_7,
+                med_levodopabens_quick_d_8 = med_levodopabens_quick_d_8,
+                med_levodopabens_quick_d_9 = med_levodopabens_quick_d_9,
+                med_levodopabens_quick_d_10 = med_levodopabens_quick_d_10
+)
+#L-dopa, benserazid (e.g. Madopar)                 --> irldopa = irldopa
+df <- transform(df,
+                med_levodopabens_ord_d_1 = med_levodopabens_ord_d_1,
+                med_levodopabens_ord_d_2 = med_levodopabens_ord_d_2,
+                med_levodopabens_ord_d_3 = med_levodopabens_ord_d_3,
+                med_levodopabens_ord_d_4 = med_levodopabens_ord_d_4,
+                med_levodopabens_ord_d_5 = med_levodopabens_ord_d_5,
+                med_levodopabens_ord_d_6 = med_levodopabens_ord_d_6,
+                med_levodopabens_ord_d_7 = med_levodopabens_ord_d_7,
+                med_levodopabens_ord_d_8 = med_levodopabens_ord_d_8,
+                med_levodopabens_ord_d_9 = med_levodopabens_ord_d_9,
+                med_levodopabens_ord_d_10 = med_levodopabens_ord_d_10 
+)
+#L-dopa, carbidopa (e.g. Sinemet)                  ------> irldopa = irldopa
+df <- transform(df,
+                med_levodopacarb_ord_d_1 = med_levodopacarb_ord_d_1,
+                med_levodopacarb_ord_d_2 = med_levodopacarb_ord_d_2,
+                med_levodopacarb_ord_d_3 = med_levodopacarb_ord_d_3,
+                med_levodopacarb_ord_d_4 = med_levodopacarb_ord_d_4,
+                med_levodopacarb_ord_d_5 = med_levodopacarb_ord_d_5,
+                med_levodopacarb_ord_d_6 = med_levodopacarb_ord_d_6,
+                med_levodopacarb_ord_d_7 = med_levodopacarb_ord_d_7,
+                med_levodopacarb_ord_d_8 = med_levodopacarb_ord_d_8,
+                med_levodopacarb_ord_d_9 = med_levodopacarb_ord_d_9,
+                med_levodopacarb_ord_d_10 = med_levodopacarb_ord_d_10
+)
+
+
+#Controlled release L-dopa, benserazid (e.g. Madopar Depot) --> crldopa = crldopa*0.75
+df <- transform(df,
+                med_levodopabens_cr_d_1= med_levodopabens_cr_d_1*0.75,
+                med_levodopabens_cr_d_2= med_levodopabens_cr_d_2*0.75,
+                med_levodopabens_cr_d_3= med_levodopabens_cr_d_3*0.75,
+                med_levodopabens_cr_d_4= med_levodopabens_cr_d_4*0.75,
+                med_levodopabens_cr_d_5= med_levodopabens_cr_d_5*0.75,
+                med_levodopabens_cr_d_6= med_levodopabens_cr_d_6*0.75,
+                med_levodopabens_cr_d_7= med_levodopabens_cr_d_7*0.75,
+                med_levodopabens_cr_d_8= med_levodopabens_cr_d_8*0.75,
+                med_levodopabens_cr_d_9= med_levodopabens_cr_d_9*0.75,
+                med_levodopabens_cr_d_10= med_levodopabens_cr_d_10*0.75
+)
+#Controlled release L-dopa, carbidopa (e.g. Sinemet Depot)  --> crldopa = crldopa*0.75
+df <- transform(df,
+                med_levodopacarb_cr_d_1 = med_levodopacarb_cr_d_1*0.75,
+                med_levodopacarb_cr_d_2 = med_levodopacarb_cr_d_2*0.75,
+                med_levodopacarb_cr_d_3 = med_levodopacarb_cr_d_3*0.75,
+                med_levodopacarb_cr_d_4 = med_levodopacarb_cr_d_4*0.75,
+                med_levodopacarb_cr_d_5 = med_levodopacarb_cr_d_5*0.75,
+                med_levodopacarb_cr_d_6 = med_levodopacarb_cr_d_6*0.75,
+                med_levodopacarb_cr_d_7 = med_levodopacarb_cr_d_7*0.75,
+                med_levodopacarb_cr_d_8 = med_levodopacarb_cr_d_8*0.75,
+                med_levodopacarb_cr_d_9 = med_levodopacarb_cr_d_9*0.75,
+                med_levodopacarb_cr_d_10= med_levodopacarb_cr_d_10*0.75
+)
+
+#Sum of L-Dopa doses per timepoint (d)
+totalldopa_d_1 <- df$med_levodopabens_quick_d_1 + df$med_levodopacarb_ord_d_1 + df$med_levodopabens_cr_d_1 + df$med_levodopacarb_cr_d_1
+totalldopa_d_2 <- df$med_levodopabens_quick_d_2 + df$med_levodopacarb_ord_d_2 + df$med_levodopabens_cr_d_2 + df$med_levodopacarb_cr_d_2
+totalldopa_d_3 <- df$med_levodopabens_quick_d_3 + df$med_levodopacarb_ord_d_3 + df$med_levodopabens_cr_d_3 + df$med_levodopacarb_cr_d_3
+totalldopa_d_4 <- df$med_levodopabens_quick_d_4 + df$med_levodopacarb_ord_d_4 + df$med_levodopabens_cr_d_4 + df$med_levodopacarb_cr_d_4
+totalldopa_d_5 <- df$med_levodopabens_quick_d_5 + df$med_levodopacarb_ord_d_5 + df$med_levodopabens_cr_d_5 + df$med_levodopacarb_cr_d_5
+totalldopa_d_6 <- df$med_levodopabens_quick_d_6 + df$med_levodopacarb_ord_d_6 + df$med_levodopabens_cr_d_6 + df$med_levodopacarb_cr_d_6
+totalldopa_d_7 <- df$med_levodopabens_quick_d_7 + df$med_levodopacarb_ord_d_7 + df$med_levodopabens_cr_d_7 + df$med_levodopacarb_cr_d_7
+totalldopa_d_8 <- df$med_levodopabens_quick_d_8 + df$med_levodopacarb_ord_d_8 + df$med_levodopabens_cr_d_8 + df$med_levodopacarb_cr_d_8
+totalldopa_d_9 <- df$med_levodopabens_quick_d_9 + df$med_levodopacarb_ord_d_9 + df$med_levodopabens_cr_d_9 + df$med_levodopacarb_cr_d_9
+totalldopa_d_10 <- df$med_levodopabens_quick_d_10 + df$med_levodopacarb_ord_d_10 + df$med_levodopabens_cr_d_10 + df$med_levodopacarb_cr_d_10
+
+#Sum of L-Dopa doses
+ldopa <- data.frame(df$record_id,totalldopa_d_1,totalldopa_d_2,totalldopa_d_3,totalldopa_d_4,totalldopa_d_5,totalldopa_d_6,totalldopa_d_7,totalldopa_d_8,totalldopa_d_9,totalldopa_d_10)
+ldopa$totalldopa <- totalldopa_d_1 + totalldopa_d_2 + totalldopa_d_3 + totalldopa_d_4 + totalldopa_d_5 + totalldopa_d_6 + totalldopa_d_7 + totalldopa_d_8 + totalldopa_d_9 + totalldopa_d_10
+View(ldopa)
+hist(ldopa$totalldopa [ldopa$totalldopa > 0], main = "total L-Dopa", xlab = "L-Dopa")
+summary(ldopa$totalldopa[ldopa$totalldopa > 0])
+
+
+#Entacapone (without L-dopa, e.g. Comtess)        --> entacapone = irldopa*0.33
+df <- transform(df,
+                med_enta_d_1 = totalldopa_d_1*0.33,
+                med_enta_d_2 = totalldopa_d_2*0.33,
+                med_enta_d_3 = totalldopa_d_3*0.33,
+                med_enta_d_4 = totalldopa_d_4*0.33,
+                med_enta_d_5 = totalldopa_d_5*0.33,
+                med_enta_d_6 = totalldopa_d_6*0.33,
+                med_enta_d_7 = totalldopa_d_7*0.33,
+                med_enta_d_8 = totalldopa_d_8*0.33,
+                med_enta_d_9 = totalldopa_d_9*0.33,
+                med_enta_d_10 = totalldopa_d_10*0.33
+)
+#L-dopa, carbidopa, entacapon (e.g. Stalevo)       --> stalevo = irldopa*0.33
+df <- transform(df,
+                med_levodopacarbente_d_1 = totalldopa_d_1*0.33,
+                med_levodopacarbente_d_2 = totalldopa_d_2*0.33,
+                med_levodopacarbente_d_3 = totalldopa_d_3*0.33,
+                med_levodopacarbente_d_4 = totalldopa_d_4*0.33,
+                med_levodopacarbente_d_5 = totalldopa_d_5*0.33,
+                med_levodopacarbente_d_6 = totalldopa_d_6*0.33,
+                med_levodopacarbente_d_7 = totalldopa_d_7*0.33,
+                med_levodopacarbente_d_8 = totalldopa_d_8*0.33,
+                med_levodopacarbente_d_9 = totalldopa_d_9*0.33,
+                med_levodopacarbente_d_10 = totalldopa_d_10*0.33
+)
+#Tolcapon (e.g. Tasmar)                             --> tolcapone = irldopa*0.5
+df <- transform(df,
+                med_tolc_d_1 = totalldopa_d_1*0.5,
+                med_tolc_d_2 = totalldopa_d_2*0.5,
+                med_tolc_d_3 = totalldopa_d_3*0.5,
+                med_tolc_d_4 = totalldopa_d_4*0.5,
+                med_tolc_d_5 = totalldopa_d_5*0.5
+)
+#Various single-dose medications
+df <- transform(df,
+                med_duodopa_d = med_duodopa_d*1.11,           #--> Duodpa = duodopa*1.11
+                med_prami = med_prami*100,                    #--> pramipexole = pramipexole*100
+                med_ropi = med_ropi*20,                       #--> ropinirole = ropinirole*20
+                med_roti = med_roti*30,                       #--> rotigotine = rotigotine*30
+                med_seleg_oral = med_seleg_oral*10,           #--> Selegiline - oral = Selegiline - oral*10
+                med_seleg_subling = med_seleg_subling*80,     #--> Selegiline - sublingual = Selegiline - sublingual*80
+                med_rasag = med_rasag*100,                    #--> Rasagiline = Rasagiline*100
+                med_aman = med_aman,                          #--> Amantadine = Amantadine
+                med_apo = med_apo*10                          #--> Apomorphine = Apomorphine*10
+)
+
+df$med_safin[df$med_safin > 0] <- 100
+#safinamide 50 or 100 mg is equivalent to “100 mg LED”
+#Source: https://www.mdsabstracts.org/abstract/levodopa-dose-equivalency-for-opicapone-and-safinamide/
+#Source: https://pubmed.ncbi.nlm.nih.gov/32258239/
+
+
+#Total sum LED
+ldopa$other_ledd_sum = rowSums(df[52:86], na.rm = FALSE) #sum of all other doses (not levodopa)
+ldopa$ledd <- ldopa$totalldopa + ldopa$other_ledd_sum #total L-Dopa dose + columns with remaining drug doses
+View(ldopa)
+hist(ldopa$ledd [ldopa$ledd > 0],breaks = 50,xlab = "L-Dopa Equivalent Daily Dose",main = "LED")
+summary(ldopa$ledd[ldopa$ledd > 0])
+
+#Save whole medication df in Excel file
+#write.csv(df,"/mnt/projects/7TPD/clinical_data/Medication/med.xlsx")
+
+write.csv(ldopa,"/mnt/projects/7TPD/clinical_data/Medication/LEDD.xlsx")
+
+
+
