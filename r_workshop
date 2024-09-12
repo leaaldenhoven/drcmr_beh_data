@@ -1,0 +1,838 @@
+#################################################################################################
+##########                    Data wrangling and pre-processing in R              ###############
+#################################################################################################
+##########                      A workshop I completed in 2023                    ###############
+
+
+### Workshop to teach dplyr and tidyverse
+
+# Note: Workshop assumes students have familiarity of R and Rstudio. We forego explanations of simple R concepts
+# (students should at least attend an Introduction to R workshop, or have some prior experience using R)
+
+# Goal: Raw data collected is rarely ready to be analysed as-is. Certain pre-processing steps are required to perform:
+# --> Data visualization 
+# --> Data analysis
+# Ex: Some steps are required to create features (i.e. variables) of interest, need to subset data, choose variables,
+#      calculate summary statistics, deal w/ missing values, etc.
+
+# In this workshop, we introduce dplyr and tidyverse to make you more comfortable with handling data in the R environment,
+# and show you unique ways you can manipulate your datasets into formats you'll need for your research goals.
+
+
+
+
+# Suggestion - enable soft-wrap in RStudio
+# Tools -> Global Options -> Code -> Soft-wrap R source files
+
+# We're going to use a dataset of Titanic passengers throughout this workshop;
+# we can easily access it by installing a package called 'titanic'
+
+library(titanic)
+
+View(titanic_train)
+
+# We'll focus on the following columns only:
+# - Survived - 0 if no, 1 if yes
+# - Pclass - Passenger Class
+# - Sex
+# - Age
+# - SibSp - Number of Siblings and/or Spouses Aboard
+# - Parch - Number of Parents/Children Aboard
+# - Fare - how much did the ticket cost (entire family)
+# - Embarked - the port at which the passengers boarded the ship
+
+# You can see this information yourself by going to the help file for titanic_train
+# ?titanic_train
+
+
+
+# I'll first use this dataset to demonstrate the different 'building blocks' of
+# data manipulation by demonstrating the different primary functions in dplyr.
+# In many cases I'll also show the corresponding code you'd use in base-R to
+# perform these tasks. In individual cases base R doesn't look too bad, but once
+# we start 'chaining' operations together dplyr's value really shines through.
+
+# The functions I'll demonstrate are the select(), mutate(), filter(),
+# arrange(), summarize(), group_by(), the join functions, and the reshaping
+# functions.
+
+# Throughout this workshop I'll be calling the base R head() function on the
+# outputs of functions to display the first 6 lines on screen. This isn't a
+# special function or part of dplyr, it's just to make the workshop easier for
+# all of us so that the console doesn't get swamped with hundreds of rows.
+
+# printing without head - too many rows!
+titanic_train
+
+# More reasonable
+head(titanic_train)
+
+
+# Use install.packages() to install packages (libraries).
+install.packages("dplyr")
+
+# Note: Instead of calling library, we could instead use tidyverse::name_of_function to call any function nested inside
+# the tidyverse R package
+
+# Load up dplyr; install if necessary
+library(dplyr)
+
+
+####### Select function
+
+# In base R if we wanted to select multiple columns we would use "[]" notation :
+head(
+  titanic_train[,c("Survived", "Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked")]
+)
+# possibly substituting the names of the columns with their numeric indices
+# instead (i.e. titanic_train[,c(2, 3, 5, 6, 7, 8, 10, 12)])
+
+# Dplyr presents a (slightly) easier way for us:
+# select() function
+# Let's try and select these same columns
+smallerDataset <- select(titanic_train, Survived, Pclass, Sex, Age, SibSp, Parch, Fare, Embarked)
+
+#####################################################################################
+# --> Quick side note, the following works the same as above:
+select(titanic_train, Survived, Pclass)
+dplyr::select(titanic_train, Survived, Pclass)
+# --> Sometimes if we have multiple libraries loaded that have same function names, the functions get
+# overwritten and R no longer performs the way in which we expect. Here, we are explicit in which library we want
+# the select() function to use.
+######################################################################################
+
+
+head(smallerDataset)
+# Okay, it worked but it was just as long as before. Are there any time savers?
+# Yes; as shown below
+
+
+
+names(titanic_train)
+
+# We can provide a range of columns to get every column in-between the ones
+# specified.
+head(
+  select(titanic_train, Survived:Pclass, Sex:Parch, Fare, Embarked)
+)
+# Using Sex:Parch in place of Sex, Age, SibSp, Parch? It was
+# shorter but still wordy
+
+names(titanic_train)
+# If only Name wasn't in between Survied:PClass, and Sex:Parch, we could shorten
+# it even more
+head(
+  select(titanic_train, Survived:Parch, Fare, Embarked, -Name) # -VariableName takes it away
+)
+
+# Longer range; more explicit about which columns we want to exclude
+head(
+  select(titanic_train, Survived:Embarked, -Name, -Ticket, -Cabin) 
+)
+
+# If we just say which columns we don't want, it gives all the other columns
+head(
+  select(titanic_train, -PassengerId, -Name, -Ticket, -Cabin) 
+)
+
+# Alright; we can now use dplyr to easily select which columns we want (or don't
+# want). This is a slight improvement over base R.
+
+
+####### Mutate
+
+# Currently in the data we denote 'Survived' by either 0 or 1; this isn't super
+# clear. Let's change it to read either 'No' or 'Yes'
+
+smallerDataset.copy <- smallerDataset
+
+
+
+# In base R this is easy enough - when true return yes, when false return no
+smallerDataset.copy$Survived <- ifelse(smallerDataset.copy$Survived==1, 'Yes', 'No')
+head(smallerDataset.copy)
+# or
+smallerDataset.copy <- within(smallerDataset, Survived <- ifelse(Survived==1, 'Yes', 'No'))
+head(smallerDataset.copy)
+
+# --> What is ifelse()? It's a handy if else statement in R. 
+# Usually, we would do if( condition ){ return value} else { return other value}.
+# ifelse does the above automatically where the arguments are ifelse(CONDTION, VALUE IF TRUE, VALUE IF FALSE)
+
+
+# This actually isn't completely awful, but it won't work with 'chaining'
+# operations like we can with dplyr (again, will show later).
+
+# In dplyr:
+# mutate() function
+head(
+  mutate(smallerDataset, Survived=ifelse(Survived==1, 'Yes', 'No'))
+)
+#Pass dataset to mutate, we don't need to call the specific dataset, because we tell it. 
+
+
+# In this case we replaced the Survived column with `ifelse(Survived==1, 'Yes', 'No')`.
+# Note that the original dataset was not modified; if we wanted to modify it we could
+# write smallerDataset <- mutate(smallerDataset, Survived=ifelse(Survived==1, 'Yes', 'No'))
+
+# We can also work with multiple columns and create new ones in one step with commas
+#Choose dataset, change survive column, change Pclass column. 
+#Now every time there is a 1, it will pick 1st, for example. 
+#In essence we transform columns from one thing to another
+
+head(
+  mutate(smallerDataset, Survived=ifelse(Survived==1, 'Yes', 'No'), 
+         Pclass=c("1st", "2nd", "3rd")[Pclass],
+         totalFamily = SibSp + Parch)
+)
+# FYI - `c("1st", "2nd", "3rd")[Pclass]` turns classes 1, 2, 3 into '1st',
+# '2nd', and '3rd'; it works because Pclass takes on values of 1,2,3 so we can
+# use R's indexing rules for vectors
+
+# Now that we have two functions in dplyr we can finally look at 'chaining'.
+# Chaining is an easy way to take the output from one function and 'pipe' it
+# into the next function. We could always do the base R method and just save our
+# output each time as a variable to pass into the next one, but that can look
+# messy. We could also nest our operations by putting one function into the
+# other, but that looks really messy, especially when we perform more than 2
+# operations.
+
+# Dplyr introduces a special operator called the pipe: %>%, aka 'and then'
+#Shrink dataset and transform columns all in one go
+
+head(
+  titanic_train %>% 
+    mutate(Survived=ifelse(Survived==1, 'Yes', 'No'), 
+           Pclass=c("1st", "2nd", "3rd")[Pclass],
+           totalFamily = SibSp + Parch) %>%
+    select(-PassengerId, -(SibSp:Ticket), -Cabin, -Name)
+)
+
+
+# --> or we could do:
+#Print titanic dataset, then do X Y Z, you use this to chain operations
+titanic_train %>% 
+  mutate(Survived=ifelse(Survived==1, 'Yes', 'No'), 
+         Pclass=c("1st", "2nd", "3rd")[Pclass],
+         totalFamily = SibSp + Parch) %>%
+  select(-PassengerId, -(SibSp:Ticket), -Cabin, -Name) %>%
+  head()
+
+# Here we took the original titanic_train dataset, piped it into the mutate
+# function which changed Survived and Pclass, and created a new column called
+# totalFamily. We then piped that changed dataset into select and removed
+# several columns we didn't want. 
+
+# Two operations - 
+#   1. Mutate Survived, Pclass, and totalFamily
+#   2. Remove several columns to only have the ones of interest
+
+# We also took out Sibsp and Parch once we were done with them as we were only
+# interested in their sum.
+
+# FYI; if you're splitting the code out onto multiple lines like above, you need
+# to make sure you put the pipe on the end of the previous line. Otherwise R
+# thinks the code is finished and prints off the result, and then tries to run
+# the next line where you started with a pipe with nothing on the left hand
+# side.
+
+
+
+
+######################################################################
+# Don't do this:
+
+# titanic_train
+# %>% mutate(Survived=ifelse(Survived==1, 'Yes', 'No'), 
+#        Pclass=c("1st", "2nd", "3rd")[Pclass],
+#        totalFamily = SibSp + Parch)
+# %>% select(-PassengerId, -(SibSp:Ticket), -Cabin, -Name)
+######################################################################
+
+
+
+####### Filter
+
+# Let's take the previous output and then filter it to only look at passengers
+# who were 18 or older.
+
+# In base R we could use the subset command easily enough, or just index by rows.
+head(subset(titanic_train, Age >= 16))
+
+condition <- titanic_train$Age >= 16
+condition[is.na(condition)] <- FALSE # some Ages are NA and need to be specially handled
+head(titanic_train[condition, ])
+
+# In dplyr
+# filter() function
+# Dplyr basically acts like subset (NAs get dropped)
+head(filter(titanic_train, Age >= 18))
+#Pass your dataset to filter function, then pass condition written in names of columns
+
+# But it's easy to use with chaining.
+
+head(
+  titanic_train %>% 
+    mutate(Survived=ifelse(Survived==1, 'Yes', 'No'), 
+           Pclass=c("1st", "2nd", "3rd")[Pclass],
+           totalFamily = SibSp + Parch) %>%
+    select(-PassengerId, -(SibSp:Ticket), -Cabin, -Name) %>%
+    filter(Age >= 18)
+)
+
+# We simply added filter(Age >= 18) to the previous chain, which removed all
+# rows that didn't match those conditions.
+
+
+
+####### Arrange
+
+# Let's now sort this data above by Fare.
+
+# This is a lot easier to do in dplyr than in base R
+# In base R:
+head(titanic_train[order(titanic_train$Fare),])
+#Extract index number from titantic dataset. 
+
+head(titanic_train[order(titanic_train$Fare, decreasing=TRUE),])
+#Change the order in the column. 
+
+# In dyplr:
+# arrange() function
+head(arrange(titanic_train, Fare)) # ascending order
+head(arrange(titanic_train, desc(Fare))) # descending order
+
+# Using chaining:
+
+# Ascending order
+head(
+  titanic_train %>% 
+    mutate(Survived=ifelse(Survived==1, 'Yes', 'No'), 
+           Pclass=c("1st", "2nd", "3rd")[Pclass],
+           totalFamily = SibSp + Parch) %>%
+    select(-PassengerId, -(SibSp:Ticket), -Cabin, -Name) %>%
+    filter(Age >= 18) %>%
+    arrange(Fare)
+)
+
+# Descending order
+head(
+  titanic_train %>% 
+    mutate(Survived=ifelse(Survived==1, 'Yes', 'No'), 
+           Pclass=c("1st", "2nd", "3rd")[Pclass],
+           totalFamily = SibSp + Parch) %>%
+    select(-PassengerId, -(SibSp:Ticket), -Cabin, -Name) %>%
+    filter(Age >= 18) %>%
+    arrange(desc(Fare))
+)
+
+
+
+####### Summarize
+
+# This function almost always goes alongside group_by while I'll show afterward.
+# I'll first demonstrate it on its own through.
+
+# Suppose we want to know the average age of a passenger (not split by anything)
+
+# base R - this is easy enough, na.rm removes NAs.
+mean(titanic_train$Age, na.rm=TRUE)
+
+# In dplyr:
+# summarize() function
+summarize(titanic_train, Average_Age = mean(Age, na.rm=TRUE))
+
+# Can use chaining
+titanic_train %>% 
+  summarize(Average_Age = mean(Age, na.rm=TRUE))
+
+# We can also include the median age as well, or other attributes we want. Here
+# I remove NAs first using filter.
+titanic_train %>%
+  filter(!is.na(Age)) %>%
+  summarize(Average_Age = mean(Age), 
+            Median_Age = median(Age))
+#Name of first and second columns, filter already removed all nas, so no need to 
+#do it individually. 
+
+# We can define our own functions if we want; we aren't restricted to built-in
+# functions (which is a big improvement over most SQL databases if you're used
+# to that).
+f <- function(x){ # Proportion of those that were adults
+  mean(x >= 18)
+}
+#Gives us proportion of X greater or equal to 18. (True or false), mean gives proportion
+#Use all the arguments and ouput all that you have done to arguments. You can also put return
+f <- function(x){
+index <-(x >= 18)
+prop<-mean(index)
+return(prop)
+}
+
+titanic_train %>%
+  filter(!is.na(Age)) %>%
+  summarize(Average_Age = mean(Age), 
+            Median_Age = median(Age),
+            Proportion_Adult = f(Age))
+
+# Okay... this wasn't that much easier than base R. The benefits only came in
+# when we calculated the mean, median, and proportion_adult by some other
+# column; like the average / median / proportion adult of those who did and
+# didn't survive.
+
+# The group_by function changes this; it will let us split by different values,
+# allowing us to calculate the average age of those who survived / didn't
+# survived, etc.
+
+
+
+####### Group_By
+
+## base R:
+# Let's see the average / median / proportion adult of those who did and didn't survive
+survived.mean <- aggregate(Age ~ Survived, titanic_train, mean, na.action=na.omit)
+survived.mean
+
+survived.median <- aggregate(Age ~ Survived, titanic_train, median, na.action=na.omit)
+survived.median
+
+survived.proportion.adult <- aggregate(Age ~ Survived, titanic_train, f, na.action=na.omit)
+survived.proportion.adult
+
+
+# This produced 3 different data.frames; to combine them takes some work.
+
+temp <- data.frame(
+  Survived = survived.mean$Survived, 
+  Average_Age=survived.mean$Age, 
+  Median_Age=survived.mean$Age, 
+  Proportion_Adult=survived.proportion.adult$Age
+  )
+temp
+
+## In dplyr:
+# group_by function
+
+# Won't do anything new yet
+
+head(
+  titanic_train %>% 
+    filter(!is.na(Age)) %>%
+    group_by(Survived)
+)
+
+
+# On it's own group_by doesn't change the data; it instead records which groups
+# summarize should use
+
+# group_by combined with summarize:
+head(
+  titanic_train %>% 
+    filter(!is.na(Age)) %>%
+    group_by(Survived) %>%
+    summarize(Average_Age = mean(Age), 
+              Median_Age = median(Age),
+              Proportion_Adult = f(Age))
+)
+
+# Now we can see the average age of those who survived and the other attributes
+
+# We can group by multiple columns, we call summariye function in the survive variable
+
+head(
+  titanic_train %>% 
+    filter(!is.na(Age)) %>%
+    group_by(Survived, Pclass) %>%
+    summarize(Average_Age = mean(Age), 
+              Median_Age = median(Age),
+              Proportion_Adult = f(Age))
+)
+
+# Now we can see these age statistics by survival status AND passenger class
+
+# There's nothing stopping us from using more of the building blocks here; let's
+# use our earlier work on here so that Survived and Pclass aren't just
+# numbers. We can also use arrange to make sure the final result is sorted so
+# that 'Yes' appears first, and then sorted by passenger class.
+
+head(
+  titanic_train %>% 
+    mutate(Survived=ifelse(Survived==1, 'Yes', 'No'), 
+           Pclass=c("1st", "2nd", "3rd")[Pclass]) %>%
+    filter(!is.na(Age)) %>%
+    group_by(Survived, Pclass) %>%
+    summarize(Average_Age = mean(Age), 
+              Median_Age = median(Age),
+              Proportion_Adult = f(Age)) %>%
+    arrange(desc(Survived), Pclass)
+)
+#Use arrange to go by survive, and ascending disorder of class.
+
+# At this point these are all of the simple operations that can be done on a
+# single table. We'll next cover how to join two tables together. Before that
+# though, we should get some practice Mini-Exercise:
+
+# Take the titanic_train data and filter for only the first class passengers.
+head(
+  titanic_train %>% 
+    filter(Pclass == 1))
+# Take the previous result and select the Survived, Sex, SibSp, Parch, and Fare
+# columns.
+head(
+  titanic_train %>% 
+    filter(Pclass == 1)%>%
+    select(Survived, Sex, SibSp, Parch, Fare))
+# Take the previous result and change Survived to read "Lived" or
+# "Died"; also create the totalFamily column as done in the examples. 
+head(
+  titanic_train %>% 
+    filter(Pclass==1)%>%
+    select(Survived, Sex, SibSp, Parch, Fare) %>%
+    mutate(Survived=ifelse(Survived==1, 'Lived', 'Died'), 
+                           totalFamily = SibSp + Parch)) 
+#Check       
+head(c("Died", "Lived"))[xx]
+Survived+1
+# Take the previous result and replace the Fare column with Fare divided by
+# totalFamily + 1. (Currently the Fare is what the entire family paid together; so
+# we'd rather make it per person).
+head(
+  titanic_train %>% 
+    filter(Pclass==1)%>%
+    select(Survived, Sex, SibSp, Parch, Fare) %>%
+    mutate(Survived=ifelse(Survived==1, 'Lived', 'Died'), 
+           totalFamily = SibSp + Parch, Fare = Fare/(totalFamily+1))) 
+# Take the previous result, and display the average Fare by both Sex and
+# Survived. Sort so that Lived appears first, then female.
+head(
+  titanic_train %>% 
+    filter(Pclass==1)%>%
+    select(Survived, Sex, SibSp, Parch, Fare) %>%
+    mutate(Survived=ifelse(Survived==1, 'Lived', 'Died'), 
+           totalFamily = SibSp + Parch, Fare = Fare/(totalFamily+1))%>%
+  arrange(desc(Survived), Sex)) 
+
+#OR
+head(
+  titanic_train %>% 
+    filter(Pclass==1)%>%
+    select(Survived, Sex, SibSp, Parch, Fare) %>%
+    mutate(Survived=ifelse(Survived==1, 'Lived', 'Died'), 
+           totalFamily = SibSp + Parch, Fare = Fare/(totalFamily+1))%>%
+    group_by(Survived,Sex)%>%
+    summarise(mean_fare = mean(Fare))%>%
+     arrange(desc(Survived), Sex)) 
+####### Joins:
+
+# Joins take two tables, tries to match up their rows based on their values in
+# some common column(s), and then stick those two tables together. It's akin to
+# trying to cbind two tables together, but it takes care of making sure the
+# values were first correctly sorted, and, depending on what type of join you
+# want, what to do if the values don't perfectly match up.
+
+# It's easier to explain by example.
+
+# Example - food taste data
+
+# taste_scores represents data where some taste testers tasted some food and
+# scored it from 0 - 10. Using the skills we learned already, we can use dplyr's
+# functions to calculate things like the average score per taster, or the
+# average score per food. However; suppose in another dataset we record whether
+# these foods taste sweet, sour, or bland; and we'd like to know the average
+# taste score for each flavor.
+
+taste_scores <- data.frame(
+  taster=c("John", "John", "John", "John", "Joel", "Joel", "Joel", "Joel", "Jill", "Jill", "Jill", "Jill"),
+  food=c("Bubblegum", "Candy Cane", "Starburst", "Celery", "Bubblegum", "Candy Cane", "Starburst", "Celery", "Bubblegum", "Candy Cane", "Starburst", "Celery"),
+  taste_score=c(8, 7, 8, 2, 6, 7, 1, 5, 7, 4, 4, 2)
+)
+taste_scores
+
+taste_flavors <- data.frame(
+  food=c("Bubblegum", "Candy Cane", "Starburst", "Celery"),
+  flavor=c("Sweet", "Sweet", "Sour", "Bland")
+)
+taste_flavors
+
+# "Joining" taste_scores and taste_flavors would produce a table that looks like this:
+
+# taster       food taste_score   flavor
+#   John  Bubblegum           8    Sweet
+#   John Candy Cane           7    Sweet
+#   John  Starburst           8     Sour
+#   John     Celery           2    Bland
+#   Joel  Bubblegum           6    Sweet
+#   Joel Candy Cane           7    Sweet
+#   Joel  Starburst           1     Sour
+#   Joel     Celery           5    Bland
+#   Jill  Bubblegum           7    Sweet
+#   Jill Candy Cane           4    Sweet
+#   Jill  Starburst           4     Sour
+#   Jill     Celery           2    Bland
+
+# We *could* go through and manually add a new column to taste_scores; this
+# takes time though and is error prone, nor is it feasible if taste_scores had
+# 1000s of rows!
+
+# Instead we'll use dplyr's join functions
+?join
+
+# In the help file you'll see a bunch of join functions; for now let's run an inner_join.
+
+# Parameters x and y are the two tables getting joined together.
+# The 'by' parameter tells the function which column to use to match up values
+# between the tables. In our case it's the food column. If you leave it blank
+# dplyr tries to use all of the columns that are in common between the two
+# tables.
+inner_join(taste_scores, taste_flavors, by="food")
+
+# Perfect! We can now look at the average scores per flavor.
+inner_join(taste_scores, taste_flavors, by="food") %>% 
+  group_by(flavor) %>%
+  summarize(average_taste_score=mean(taste_score)) %>%
+  arrange(desc(average_taste_score))
+
+# Now we can see that sweet foods do best, sour foods second, and then bland foods last.
+
+
+# Differences between the types of joins
+
+# Again, it's easist to show by example
+# Let's add some taste scores for a 'Mystery' food
+taste_scoresB <- rbind(taste_scores, data.frame(
+  taster=c("John", "Joel", "Jill"), 
+  food="Mystery", 
+  taste_score=c(8, 1, 5)
+))
+taste_scoresB
+
+# And let's add a food flavor for Pizza.
+taste_flavorsB <- rbind(taste_flavors, data.frame(
+  food=c("Pizza"),
+  flavor=c("Savory")
+))
+taste_flavorsB
+
+# Added new taste scores for Mystery, and flavor for Pizza
+
+# Wait - we have Mystery in taste_scoresB but Pizza in table_categoriesB. 
+# They don't match.
+
+# Entirely feasible - we don't know what Mystery tastes like, and the tasters
+# never scored Pizza even though we know it's Savory flavored.
+
+# When we join taste_scoresB and taste_flavorsB together, what do we want the
+# output to look like? How should the rows get matched up when there are no
+# values to match with? 
+
+# It's our choice.
+
+# Sometimes we'll want to delete the rows where we don't know the food's
+# flavour, or when we never scored that food. Using inner_join() does this; only
+# the rows where food has a matching value in both tables are kept.
+inner_join(taste_scoresB, taste_flavorsB, by="food")
+#fulljoin brings everything together, we tell R that there is no intersection, and try connect by certain column
+#Innerjoin only brings rows that are common
+#Join tables only based on information available
+# Notice how neither Pizza nor Mystery appear anywhere.
+
+# FYI - we can ignore the warning message. Dplyr is letting us know that the two
+# factor columns have different levels (i.e. they don't match up), which we
+# already knew. It's good to see it though, especially if you were expecting
+# them to match up and they didn't.
+
+
+# Sometimes we'll want to keep the rows where we don't know the food's flavour
+# and just have an NA for the flavor. Use left_join() (or right_join() with
+# tables swapped).
+left_join(taste_scoresB, taste_flavorsB, by="food")
+
+# Maybe we care more about getting all of the food flavors in the dataset, even
+# if we never scored it. Use right_join() (or left_join() with tables swapped).
+right_join(taste_scoresB, taste_flavorsB, by="food")
+
+# Maybe we don't want to lose any rows at all, and are comfortable with NAs.
+# Use full_join().
+full_join(taste_scoresB, taste_flavorsB, by="food")
+
+
+# semi_join() and anti_join() are used for filtering based off of whether the
+# value appears in the other table. 
+#Antijoin is what is removed in the inner join
+#semijoin finds commonalities between subjects
+
+# semi_join() is like an inner_join() in that it deletes the rows that don't
+# match, but it won't give you the columns from the other table. Suppose you
+# only want food scores for 'respectable foods' that even have a flavor with a
+# name.
+semi_join(taste_scoresB, taste_flavorsB, by="food")
+
+# anti_join() is the opposite of semi_food(); it only gives you the rows that
+# *didn't* match the other table and would have been deleted in an inner_join.
+# Suppose you only want food scores for the exotic foods that haven't yet been
+# given a flavor.
+anti_join(taste_scoresB, taste_flavorsB, by="food")
+
+# nest_join() is a new function that was recently added. It's more technical to
+# use, but is flexible enough that you can derive the other types of joins from
+# it, or some strange hybrid type joins. For instance, with some additional
+# code, nest_join could just add a column that counts how many times the row in
+# the first table matched a row in the second table. I won't be demonstrating
+# nest_join as it's more technical to use and its use case is limited.
+
+
+
+
+# Mini-Exercise:
+
+# In the titanic_train data, display a table that contains all the original
+# columns, but also a column called 'Age_Difference' which is Age minus the
+# average Age in each group of Survived, Sex, and PClass. 
+average_tit_mean <- titanic_train %>% 
+    filter(!is.na(Age)) %>%
+    group_by(Survived,  Sex, Pclass)%>%
+  summarize(Average_Age = mean(Age))
+
+average_tit_mean
+
+mean_age_titanic <- inner_join(titanic_train, average_tit_mean, by= c("Survived", "Sex", "Pclass"))%>%
+  mutate(Age_Difference = Age - Average_Age)
+head(mean_age_titanic)
+# Before you start coding first think about what steps you'll have to do. If you
+# aren't sure feel free to ask for help. 
+
+# Hint - you'll need to join titanic_train to a table containing the average age
+# for each group.
+
+
+
+
+
+
+
+
+
+
+
+
+####### Reshaping
+
+# Another common operation with data is moving between 'long' and 'wide' format.
+taste_scores
+# Example - right now taste_scores is in 'long' format with respect to food and
+# taste_score. This format is flexible if we ever need to add new foods, like we
+# did with the Mystery food. However, what if we'd prefer that each row belong
+# to a taster, and that we have a taste score column for each food?
+
+# Example of wide format (column names may vary)
+# Taster      Bubblegum_score   Candy_Cane_score  Starburst_score   Celery_score
+# John              8                 7                   8               2
+# Joel              6                 7                   1               5
+# Jill              7                 4                   4               2
+
+# The tidyr package (written by the author of dplyr) has two functions, gather()
+# and spread(), that help us move between the formats.
+
+# Let's first use the spread function to represent taste_scores in wide format
+
+install.packages("tidyr")
+library(tidyr) # install if necessary
+#I wish I had this during SNAP. 
+
+?spread
+# spread(data, key, value)
+# data is data.frame
+# key tells tidyr wh ich column(s) should be used to split the value column into columns; in our case it's food
+# value says which column should get turned into multiple columns; in our case it's taste_score
+taste_scores.wide <- spread(taste_scores, key=food, value=taste_score)
+taste_scores.wide
+
+# There are other parameters; fill sets what missing values should be (default NA)
+# sep is used to be more explicit about column names
+spread(taste_scores, key=food, value=taste_score, sep="=")
+spread(taste_scores, key=food, value=taste_score, sep="<->")
+#Allows you to change column names. The opposite can be done by gather. 
+
+# gather() does the opposite of spread(); it takes a table in wide format and
+# turns it into a long format.
+?gather
+
+# We set the same parameters as in spread but instead of specifiying the columns
+# we want to use, we specify the columns we want to create. We then also have to
+# provide the columns that will constitute our score values.
+gather(taste_scores.wide, key="my_food_column", value="my_score_column", Bubblegum:Starburst)
+#Goes from bubblegum to starburst. 
+
+
+# Mini-Exercise: 
+
+# Using the titanic_train dataset, produce a table that shows the proportion of
+# those who survived by passenger class (Pclass) and Sex. Each row should denote
+# a Sex, and each column a passenger class.
+
+tit_wide <- titanic_train%>%
+  mutate(Pclass=c("1st", "2nd", "3rd")[Pclass])%>%
+  #filter(!is.na(Age)) %>%
+  group_by(Sex, Pclass) %>%
+  summarize(Proportion_Survived = mean(Survived))%>%
+spread(key=Pclass, value=Proportion_Survived)
+tit_wide
+
+# Finished table should look like this:
+#    Sex       1st       2nd       3rd
+# female 0.9680851 0.9210526 0.5000000
+#   male 0.3688525 0.1574074 0.1354467
+
+
+
+
+# Larger exercise (if time permits):
+
+# Throughout this workshop we've been looking at the titanic data to see the
+# proportion of survival in different groups. For this exercise, choose a few
+# columns you'll group by that you think are meaningful to the chance of
+# survival. For those groups you chose, calculate the proportion of people who
+# survived.
+
+# Here's a dataset you can use which converts several numeric columns into
+# categories (like converting Age into ranges). This way you'll be able to use
+# those columns in your group_by and have high enough sample sizes in each group
+# that the survival proportion will be stable enough.
+titanic_train_exercise <- titanic_train %>% 
+  mutate(Pclass=c("1st", "2nd", "3rd")[Pclass],
+         totalFamily = SibSp + Parch) %>%
+  mutate(Fare = Fare / (totalFamily+1)) %>% # convert Fare to Fare per person
+  filter(!is.na(Age) & !is.na(Fare) & !is.na(totalFamily)) %>%
+  mutate(
+    Age=case_when(
+      Age < 18 ~ "Under 18",
+      Age >= 18 & Age <= 25 ~ "18-25",
+      Age >= 26 & Age <= 35 ~ "26-35",
+      Age >= 36 & Age <= 59 ~ "36-59",
+      Age >= 60 ~ "60+"),
+    Fare=case_when(
+      Fare == 0 ~ "0",
+      Fare >= 0 & Fare <= 10 ~ "(0,10]",
+      Fare > 10 & Fare <= 20 ~ "(10,20]",
+      Fare > 20 & Fare <= 30 ~ "(20,30]",
+      Fare > 30 ~ "30+"
+    ),
+    totalFamily=case_when(
+      totalFamily==0 ~ "Alone",
+      totalFamily > 0 & totalFamily <= 2 ~ "1-2",
+      totalFamily > 2 & totalFamily <= 4 ~ "3-4",
+      totalFamily > 4 ~ "4+"
+    )
+  ) %>%
+  select(-PassengerId, -(SibSp:Ticket), -Cabin, -Name)
+
+# Note the heavy use of case_when; it's a function included in dplyr which acts
+# like a multi-case if-else statement.
+
+# So calculate the proportion of survival for the column groups you think are
+# good predictors. Then join that column back onto titanic_train_exercise, and
+# make predictions of whether they survived or not based on that probability; a
+# probability >= 0.5 is predicted to survive, otherwise not.
+
+# Finally, calculate the proportion of times you made a wrong prediction.
+
