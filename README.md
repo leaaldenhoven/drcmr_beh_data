@@ -1,2 +1,2 @@
-# drcmr_beh_data
-In this markdown, I re-analysed the data collected in one of my master's theses. Originally, I used SPSS to analyse the data but wanted to practice my R skills using this dataset. The code can be found in the analysis_script file and I provided a output file to visualise what the code does.
+# r_scripts
+In this repository, I collected a scripts I have written and worked on while learning to use R and using it toanalyse data. commandlibrary.R is a file I used a guide to look back on when working on new data processing projects. Apart from that, you will find a script used to re-analyse data collected in one of my master's theses. Originally, I used SPSS to analyse the data but wanted to practice my R skills using this dataset. The code can be found in the analysis_script file and I provided an output.pdf file to visualise what the code does.
